@@ -13,7 +13,6 @@ import {
 } from 'lucide-react';
 
 const App = () => {
-  // Initial state with empty strings or default values for smooth typing
   const [inputs, setInputs] = useState({
     initialCost: "150000",
     powerRating: "22",
@@ -23,7 +22,6 @@ const App = () => {
     lifecycle: "10"
   });
 
-  // Dynamic calculation logic triggered on any input change
   const results = useMemo(() => {
     const pwr = parseFloat(inputs.powerRating) || 0;
     const hrs = parseFloat(inputs.operatingHours) || 0;
@@ -75,46 +73,46 @@ const App = () => {
   }).format(v || 0);
 
   return (
-    <div className="min-h-screen bg-[#030712] text-[#f8fafc] font-sans selection:bg-blue-500/30 pb-20">
+    <div className="min-h-screen lg:h-screen w-full bg-[#030712] text-[#f8fafc] font-sans selection:bg-blue-500/30 lg:overflow-hidden flex flex-col">
       
-      {/* Visual background elements */}
+      {/* Background Decor */}
       <div className="fixed inset-0 pointer-events-none z-0">
-        <div className="absolute top-[-10%] right-[-10%] w-[800px] h-[800px] bg-blue-600/10 blur-[120px] rounded-full" />
-        <div className="absolute bottom-[-5%] left-[-5%] w-[600px] h-[600px] bg-indigo-600/10 blur-[100px] rounded-full" />
+        <div className="absolute top-[-10%] right-[-10%] w-[600px] h-[600px] bg-blue-600/5 blur-[120px] rounded-full" />
+        <div className="absolute bottom-[-5%] left-[-5%] w-[400px] h-[400px] bg-indigo-600/5 blur-[100px] rounded-full" />
       </div>
 
-      <div className="max-w-7xl mx-auto p-4 md:p-10 relative z-10">
+      <div className="flex-1 flex flex-col max-w-7xl mx-auto w-full p-4 md:p-6 lg:p-8 relative z-10 gap-4 md:gap-5">
         
-        {/* Header Section */}
-        <header className="flex flex-col md:flex-row justify-between items-center bg-slate-900/60 backdrop-blur-xl p-6 rounded-[2.5rem] mb-8 border border-white/10 shadow-2xl transition-all">
-          <div className="flex items-center gap-5">
-            <div className="w-14 h-14 bg-blue-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/20">
-              <Factory className="text-white w-7 h-7" />
+        {/* Header - Compact & Elegant */}
+        <header className="flex flex-row justify-between items-center bg-slate-900/40 backdrop-blur-md px-6 py-4 rounded-3xl border border-white/5 shadow-xl shrink-0">
+          <div className="flex items-center gap-4">
+            <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/20">
+              <Factory className="text-white w-5 h-5" />
             </div>
             <div>
-              <h1 className="text-2xl font-black tracking-tighter text-white uppercase leading-none">
+              <h1 className="text-lg font-black tracking-tighter text-white uppercase leading-none">
                 PUMP TCO <span className="text-blue-500">MASTER</span>
               </h1>
-              <p className="text-[10px] font-bold text-slate-500 tracking-[0.3em] uppercase mt-1">Industrial Intelligence Tool</p>
+              <p className="text-[8px] font-bold text-slate-500 tracking-[0.2em] uppercase mt-1">Industrial Intelligence Unit</p>
             </div>
           </div>
           
           <button 
             onClick={handleReset}
-            className="mt-5 md:mt-0 flex items-center gap-2 px-8 py-4 bg-red-500/10 hover:bg-red-500 text-red-400 hover:text-white rounded-2xl text-[11px] font-extrabold transition-all border border-red-500/20 uppercase tracking-widest cursor-pointer active:scale-95 shadow-xl"
+            className="flex items-center gap-2 px-4 py-2 bg-red-500/5 hover:bg-red-500/20 text-red-400 rounded-xl text-[9px] font-extrabold transition-all border border-red-500/10 uppercase tracking-widest active:scale-95"
           >
-            <RotateCcw size={16} /> Reset All Data
+            <RotateCcw size={12} /> Reset Data
           </button>
         </header>
 
-        {/* TOP: Parameter Setup (Horizontal Layout) */}
-        <div className="bg-slate-900/60 backdrop-blur-xl rounded-[2.5rem] p-8 md:p-10 shadow-2xl border border-white/5 mb-8">
-          <div className="flex items-center gap-3 mb-8 border-b border-white/5 pb-5">
-            <LayoutDashboard size={18} className="text-blue-400" />
-            <h2 className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-400">Parameter Setup</h2>
+        {/* TOP: Parameter Setup */}
+        <section className="bg-slate-900/40 backdrop-blur-md rounded-3xl p-5 border border-white/5 shadow-lg shrink-0 overflow-hidden">
+          <div className="flex items-center gap-2 mb-4 border-b border-white/5 pb-3">
+            <LayoutDashboard size={14} className="text-blue-400" />
+            <h2 className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400">Parameter Setup</h2>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6 items-end">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
             <InputBox label="ราคาจัดซื้อ (CapEx)" name="initialCost" value={inputs.initialCost} onChange={handleInputChange} unit="บาท" />
             <InputBox label="มอเตอร์ (kW)" name="powerRating" value={inputs.powerRating} onChange={handleInputChange} unit="kW" />
             <InputBox label="รัน (ชม./ปี)" name="operatingHours" value={inputs.operatingHours} onChange={handleInputChange} unit="Hr" />
@@ -122,10 +120,10 @@ const App = () => {
             <InputBox label="บำรุงรักษา/ปี" name="maintenanceCost" value={inputs.maintenanceCost} onChange={handleInputChange} unit="บาท" />
           </div>
 
-          <div className="bg-linear-to-r from-black/60 to-black/20 p-6 rounded-[1.5rem] border border-white/5 mt-8 shadow-inner flex flex-col md:flex-row md:items-center gap-6">
-            <div className="min-w-[120px]">
-              <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-1">อายุโครงการ</span>
-              <span className="text-blue-400 font-black text-2xl leading-none">{inputs.lifecycle || 0} <span className="text-xs text-slate-600 font-bold">ปี</span></span>
+          <div className="bg-black/30 p-4 rounded-2xl border border-white/5 mt-4 flex items-center gap-6">
+            <div className="shrink-0 min-w-[100px]">
+              <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest block">อายุโครงการ</span>
+              <span className="text-blue-400 font-black text-xl leading-none">{inputs.lifecycle || 0} <span className="text-[10px] text-slate-600">ปี</span></span>
             </div>
             <input 
               type="range" name="lifecycle" min="1" max="25" 
@@ -133,76 +131,70 @@ const App = () => {
               className="flex-1 h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-blue-500" 
             />
           </div>
-        </div>
+        </section>
 
-        {/* MIDDLE: Massive Results Section */}
-        <div className="mb-8">
-          <div className="bg-linear-to-br from-blue-700 via-blue-900 to-slate-950 rounded-[3rem] p-10 md:p-16 text-white shadow-3xl relative overflow-hidden group border border-white/10">
-            <div className="absolute top-0 right-0 p-12 opacity-[0.05] scale-[4] pointer-events-none group-hover:rotate-12 transition-transform duration-1000">
-              <Calculator size={140} />
+        {/* MIDDLE: Massive Results */}
+        <section className="flex-1 min-h-[220px] flex flex-col justify-center bg-linear-to-br from-blue-700 via-blue-900 to-slate-950 rounded-[2.5rem] p-6 md:p-8 lg:p-10 text-white shadow-2xl relative overflow-hidden group border border-white/10 shrink-0">
+          <div className="absolute top-0 right-0 p-8 opacity-[0.03] scale-[3] pointer-events-none group-hover:rotate-6 transition-transform duration-1000">
+            <Calculator size={120} />
+          </div>
+          
+          <div className="relative z-10 w-full h-full flex flex-col justify-between">
+            <div className="inline-flex self-start items-center gap-2 px-3 py-1 bg-white/10 rounded-full border border-white/10 text-[8px] font-black uppercase tracking-[0.2em] text-blue-100">
+              <Activity size={10} className="text-blue-400" /> Life Cycle Total Cost Analysis
             </div>
             
-            <div className="relative z-10">
-              <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-white/10 rounded-full border border-white/10 text-[10px] font-black uppercase tracking-[0.2em] text-blue-200 mb-8">
-                <Activity size={12} className="text-blue-400" /> Life Cycle Total Cost
-              </div>
-              
-              <div className="mb-12">
-                <div className="text-6xl md:text-8xl lg:text-[10rem] font-black tracking-tighter leading-tight text-white transition-all duration-300 drop-shadow-[0_10px_40px_rgba(0,0,0,0.6)]">
-                  {formatCurr(results.totalTCO)}
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 pt-10 border-t border-white/10">
-                <DisplayItem label="ค่าพลังงานสะสม" value={formatCurr(results.totalEnergyCost)} />
-                <DisplayItem label="บำรุงรักษาสะสม" value={formatCurr(results.totalMaintenanceCost)} />
-                <DisplayItem label="เฉลี่ยต้นทุน/ปี" value={formatCurr(results.averageYearlyCost)} highlight />
+            <div className="flex-1 flex items-center justify-center py-4">
+              <div className="text-5xl md:text-7xl lg:text-[7.5rem] font-black tracking-tighter leading-none text-white transition-all duration-300 drop-shadow-[0_10px_40px_rgba(0,0,0,0.5)] flex items-baseline gap-2">
+                {formatCurr(results.totalTCO)}
               </div>
             </div>
-          </div>
-        </div>
 
-        {/* BOTTOM: Side-by-Side Distribution & Verdict */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-stretch">
-          
-          {/* Cost Distribution Box */}
-          <div className="bg-slate-900/60 backdrop-blur-xl rounded-[2.5rem] p-10 shadow-xl border border-white/5 flex flex-col h-full">
-            <h3 className="text-[10px] font-black text-slate-500 mb-10 uppercase tracking-[0.2em] flex items-center gap-2">
-              <PieChartIcon size={16} className="text-blue-500" /> Cost Distribution
+            <div className="grid grid-cols-3 gap-4 pt-6 border-t border-white/10">
+              <DisplayItem label="พลังงานสะสม" value={formatCurr(results.totalEnergyCost)} />
+              <DisplayItem label="ซ่อมบำรุงสะสม" value={formatCurr(results.totalMaintenanceCost)} />
+              <DisplayItem label="เฉลี่ยต้นทุน/ปี" value={formatCurr(results.averageYearlyCost)} highlight />
+            </div>
+          </div>
+        </section>
+
+        {/* BOTTOM: Side-by-Side Analysis */}
+        <section className="grid grid-cols-1 lg:grid-cols-2 gap-4 h-auto lg:h-[200px] shrink-0">
+          <div className="bg-slate-900/40 backdrop-blur-md rounded-3xl p-6 border border-white/5 flex flex-col shadow-lg overflow-hidden">
+            <h3 className="text-[9px] font-black text-slate-500 mb-4 uppercase tracking-[0.2em] flex items-center gap-2">
+              <PieChartIcon size={14} className="text-blue-500" /> Cost Distribution
             </h3>
-            <div className="space-y-9 flex-1 flex flex-col justify-center">
-              <BarProgress label="ต้นทุนการจัดซื้อ (CapEx)" p={results.percentages.initial} color="#475569" />
-              <BarProgress label="ค่าพลังงานสะสม (OpEx)" p={results.percentages.energy} color="#3b82f6" />
-              <BarProgress label="ค่าซ่อมบำรุง (Maintenance)" p={results.percentages.maintenance} color="#10b981" />
+            <div className="flex-1 flex flex-col justify-around">
+              <BarProgress label="จัดซื้อ (CapEx)" p={results.percentages.initial} color="#475569" />
+              <BarProgress label="พลังงาน (OpEx)" p={results.percentages.energy} color="#3b82f6" />
+              <BarProgress label="ซ่อมบำรุง (Maint)" p={results.percentages.maintenance} color="#10b981" />
             </div>
           </div>
 
-          {/* Technical Verdict Box */}
-          <div className="bg-blue-600/5 border border-blue-500/10 rounded-[2.5rem] p-10 shadow-xl flex flex-col justify-center h-full transition-all hover:bg-blue-600/10">
-            <h4 className="text-2xl font-black text-white mb-6 tracking-tight uppercase flex items-center gap-3">
-              Verdict Analysis
+          <div className="bg-blue-600/5 border border-blue-500/10 rounded-3xl p-6 flex flex-col shadow-lg">
+            <h4 className="text-lg font-black text-white mb-2 tracking-tight uppercase flex items-center gap-2">
+              Engineering Verdict
             </h4>
-            <div className="flex-1 flex flex-col justify-center">
-              <p className="text-lg text-slate-300 leading-relaxed font-medium mb-8">
+            <div className="flex-1 flex items-center">
+              <p className="text-sm md:text-base text-slate-300 leading-relaxed font-medium">
                 {results.totalTCO <= 0 ? "กรุณากรอกข้อมูลเพื่อเริ่มการวิเคราะห์..." :
                  results.percentages.energy > 80 
-                  ? "ค่าไฟสูงถึง 80%+ ของต้นทุนทั้งหมด! แนะนำปั๊มรุ่น Premium Efficiency เพื่อคืนทุนรวดเร็ว" 
-                  : "โครงสร้างต้นทุนมีความสมดุล แนะนำให้พิจารณาแผนบำรุงรักษาเชิงป้องกันเพื่อลดความเสี่ยง"}
+                  ? "ค่าไฟสูงถึง 80%+ ของต้นทุนทั้งหมด! แนะนำปั๊มรุ่น Premium Efficiency เพื่อจุดคุ้มทุนที่รวดเร็วที่สุด" 
+                  : "โครงสร้างต้นทุนมีความสมดุล แนะนำให้พิจารณาแผนบำรุงรักษาเชิงป้องกันเพื่อลดความเสี่ยงในการ Breakdown"}
               </p>
             </div>
-            <div className="mt-auto flex items-center gap-2 text-[10px] font-black text-blue-500 uppercase tracking-[0.3em] border-t border-blue-500/10 pt-8">
-              Engineering Insights <ArrowRight size={14} />
+            <div className="mt-4 flex items-center gap-2 text-[8px] font-black text-blue-500 uppercase tracking-[0.2em] border-t border-blue-500/10 pt-3">
+              Technical Insights Data <ArrowRight size={12} />
             </div>
           </div>
-
-        </div>
+        </section>
 
       </div>
     </div>
   );
 };
 
-// --- Sub-components ---
+// --- Sub-components (Optimized for space) ---
 
 const InputBox = ({ label, name, value, onChange, unit }) => {
   const displayValue = useMemo(() => {
@@ -214,17 +206,17 @@ const InputBox = ({ label, name, value, onChange, unit }) => {
   }, [value]);
 
   return (
-    <div className="space-y-3 w-full">
-      <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-[0.2em] block ml-1">{label}</label>
+    <div className="space-y-1.5 w-full">
+      <label className="text-[8px] font-extrabold text-slate-500 uppercase tracking-[0.15em] block ml-1">{label}</label>
       <div className="relative group">
         <input 
           type="text" name={name} 
           value={displayValue} 
           placeholder="0"
           onChange={onChange} inputMode="decimal"
-          className="w-full bg-black/40 border border-white/10 rounded-2xl px-5 py-4 text-white font-bold outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all placeholder:text-slate-800 text-base"
+          className="w-full bg-black/40 border border-white/5 rounded-xl px-4 py-3 text-white font-bold outline-none focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/10 transition-all text-sm"
         />
-        <div className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/5 px-2 py-1 rounded-lg text-[9px] font-black text-slate-500 uppercase pointer-events-none group-focus-within:text-blue-400 transition-colors">
+        <div className="absolute right-3 top-1/2 -translate-y-1/2 px-1.5 py-0.5 rounded text-[8px] font-black text-slate-700 uppercase">
           {unit}
         </div>
       </div>
@@ -234,23 +226,23 @@ const InputBox = ({ label, name, value, onChange, unit }) => {
 
 const DisplayItem = ({ label, value, highlight }) => (
   <div className="min-w-0">
-    <p className="text-[10px] text-blue-200/40 uppercase font-black tracking-[0.2em] mb-3">{label}</p>
-    <p className={`text-xl md:text-2xl font-black truncate ${highlight ? 'text-emerald-400' : 'text-white'}`}>
+    <p className="text-[8px] text-blue-200/30 uppercase font-black tracking-[0.15em] mb-1">{label}</p>
+    <p className={`text-sm md:text-lg font-black truncate ${highlight ? 'text-emerald-400' : 'text-white'}`}>
       {value}
     </p>
   </div>
 );
 
 const BarProgress = ({ label, p, color }) => (
-  <div className="space-y-3">
-    <div className="flex justify-between text-[10px] font-black uppercase tracking-[0.2em]">
+  <div className="space-y-1.5">
+    <div className="flex justify-between text-[8px] font-black uppercase tracking-[0.1em]">
       <span className="text-slate-500">{label}</span>
       <span className="text-white font-mono">{p.toFixed(1)}%</span>
     </div>
-    <div className="h-2.5 w-full bg-black/60 rounded-full overflow-hidden border border-white/5 p-[1px]">
+    <div className="h-1.5 w-full bg-black/40 rounded-full overflow-hidden border border-white/5">
       <div 
         style={{ width: `${p}%`, backgroundColor: color }} 
-        className="h-full rounded-full transition-all duration-1000 shadow-[0_0_15px_rgba(59,130,246,0.2)]" 
+        className="h-full rounded-full transition-all duration-700 shadow-sm" 
       />
     </div>
   </div>
