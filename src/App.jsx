@@ -9,8 +9,15 @@ import {
   Info, 
   ArrowRight,
   Calculator,
-  Activity
+  Activity,
+  Save,
+  Trash2,
+  Check,
+  X
 } from 'lucide-react';
+import { 
+  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer 
+} from 'recharts';
 
 const App = () => {
   const [inputs, setInputs] = useState({
@@ -21,6 +28,10 @@ const App = () => {
     maintenanceCost: "15000",
     lifecycle: "10"
   });
+
+  const [savedScenarios, setSavedScenarios] = useState([]);
+  const [isSaving, setIsSaving] = useState(false);
+  const [simName, setSimName] = useState("");
 
   const results = useMemo(() => {
     const pwr = parseFloat(inputs.powerRating) || 0;
@@ -66,6 +77,94 @@ const App = () => {
     });
   };
 
+  const confirmSave = () => {
+    const finalName = simName.trim() || `Simulation ${savedScenarios.length + 1}`;
+    const newScenario = {
+      id: Date.now(),
+      name: finalName,
+      inputs: { ...inputs },
+      results: { ...results }
+    };
+    setSavedScenarios([...savedScenarios, newScenario]);
+    setIsSaving(false);
+    setSimName("");
+  };
+
+  const handleRemoveScenario = (id) => {
+    setSavedScenarios(savedScenarios.filter(s => s.id !== id));
+  };
+
+  const chartData = useMemo(() => {
+    const maxLife = Math.max(
+      parseFloat(inputs.lifecycle) || 1,
+      ...savedScenarios.map(s => parseFloat(s.inputs.lifecycle) || 1)
+    );
+    const years = Math.min(Math.max(maxLife, 1), 25);
+    let data = [];
+    
+    let currentCumulative = parseFloat(inputs.initialCost) || 0;
+    let savedCumulative = savedScenarios.map(s => parseFloat(s.inputs.initialCost) || 0);
+
+    const pwr = parseFloat(inputs.powerRating) || 0;
+    const hrs = parseFloat(inputs.operatingHours) || 0;
+    const cost = parseFloat(inputs.electricityCost) || 0;
+    const maint = parseFloat(inputs.maintenanceCost) || 0;
+    const currentYearly = (pwr * hrs * cost) + maint;
+
+    let year0 = { year: 0, "Current Setup": currentCumulative };
+    savedScenarios.forEach((s, idx) => {
+      year0[s.name] = savedCumulative[idx];
+    });
+    data.push(year0);
+
+    for (let y = 1; y <= years; y++) {
+      let yearData = { year: y };
+      currentCumulative += currentYearly;
+      yearData["Current Setup"] = currentCumulative;
+
+      savedScenarios.forEach((s, idx) => {
+        const spwr = parseFloat(s.inputs.powerRating) || 0;
+        const shrs = parseFloat(s.inputs.operatingHours) || 0;
+        const scost = parseFloat(s.inputs.electricityCost) || 0;
+        const smaint = parseFloat(s.inputs.maintenanceCost) || 0;
+        savedCumulative[idx] += (spwr * shrs * scost) + smaint;
+        yearData[s.name] = savedCumulative[idx];
+      });
+      data.push(yearData);
+    }
+    return data;
+  }, [inputs, savedScenarios]);
+
+  const breakevenMessages = useMemo(() => {
+    if (savedScenarios.length === 0) return [];
+    let messages = [];
+    savedScenarios.forEach(s => {
+      let oldCost = parseFloat(s.inputs.initialCost) || 0;
+      let newCost = parseFloat(inputs.initialCost) || 0;
+      
+      const oldYearly = ((parseFloat(s.inputs.powerRating) || 0) * (parseFloat(s.inputs.operatingHours) || 0) * (parseFloat(s.inputs.electricityCost) || 0)) + (parseFloat(s.inputs.maintenanceCost) || 0);
+      const newYearly = ((parseFloat(inputs.powerRating) || 0) * (parseFloat(inputs.operatingHours) || 0) * (parseFloat(inputs.electricityCost) || 0)) + (parseFloat(inputs.maintenanceCost) || 0);
+      
+      const yearDiff = oldYearly - newYearly;
+      const costDiff = newCost - oldCost;
+      
+      if (yearDiff > 0 && costDiff > 0) {
+        const beYear = costDiff / yearDiff;
+        if (beYear > 0 && beYear <= 25) {
+          messages.push(`เทียบกับ ${s.name}: จุดคุ้มทุนในปีที่ ${beYear.toFixed(1)}`);
+        }
+      } else if (yearDiff < 0 && costDiff < 0) {
+         const beYear = costDiff / yearDiff;
+         if (beYear > 0 && beYear <= 25) { 
+           messages.push(`${s.name} จะคุ้มทุนเร็วกว่าในปีที่ ${beYear.toFixed(1)}`);
+         }
+      }
+    });
+    return messages;
+  }, [inputs, savedScenarios]);
+
+  const chartColors = ['#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4'];
+
   const formatCurr = (v) => new Intl.NumberFormat('th-TH', { 
     style: 'currency', 
     currency: 'THB', 
@@ -73,7 +172,7 @@ const App = () => {
   }).format(v || 0);
 
   return (
-    <div className="min-h-screen lg:h-screen w-full bg-[#030712] text-[#f8fafc] font-sans selection:bg-blue-500/30 lg:overflow-hidden flex flex-col">
+    <div className="min-h-screen w-full bg-[#030712] text-[#f8fafc] font-sans selection:bg-blue-500/30 flex flex-col">
       
       {/* Background Decor */}
       <div className="fixed inset-0 pointer-events-none z-0">
@@ -97,12 +196,54 @@ const App = () => {
             </div>
           </div>
           
-          <button 
-            onClick={handleReset}
-            className="flex items-center gap-2 px-3 py-1.5 bg-red-500/5 hover:bg-red-500/20 text-red-400 rounded-lg text-[8px] font-extrabold transition-all border border-red-500/10 uppercase tracking-widest active:scale-95"
-          >
-            <RotateCcw size={10} /> Reset Data
-          </button>
+          <div className="flex items-center gap-2">
+            {isSaving ? (
+              <div className="flex items-center gap-1.5 animate-in fade-in slide-in-from-right-2 duration-200">
+                <input 
+                  type="text" 
+                  autoFocus
+                  value={simName}
+                  onChange={(e) => setSimName(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') confirmSave();
+                    if (e.key === 'Escape') setIsSaving(false);
+                  }}
+                  placeholder={`Simulation ${savedScenarios.length + 1}`}
+                  className="bg-black/60 border border-blue-500/50 rounded-lg px-2 py-1.5 text-[10px] text-white outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-500/20 w-32 md:w-40 transition-all font-bold placeholder:text-slate-600"
+                />
+                <button 
+                  onClick={confirmSave}
+                  className="p-1.5 bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/40 rounded-lg transition-colors border border-emerald-500/20 shadow-sm"
+                  title="Confirm Save"
+                >
+                  <Check size={12} strokeWidth={3} />
+                </button>
+                <button 
+                  onClick={() => setIsSaving(false)}
+                  className="p-1.5 bg-slate-500/20 text-slate-400 hover:bg-slate-500/40 rounded-lg transition-colors border border-white/10 shadow-sm"
+                  title="Cancel"
+                >
+                  <X size={12} strokeWidth={3} />
+                </button>
+              </div>
+            ) : (
+              <button 
+                onClick={() => {
+                  setSimName("");
+                  setIsSaving(true);
+                }}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 rounded-lg text-[8px] font-extrabold transition-all border border-blue-500/20 uppercase tracking-widest active:scale-95 shadow-sm"
+              >
+                <Save size={10} /> Save Sim
+              </button>
+            )}
+            <button 
+              onClick={handleReset}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-red-500/5 hover:bg-red-500/20 text-red-400 rounded-lg text-[8px] font-extrabold transition-all border border-red-500/10 uppercase tracking-widest active:scale-95"
+            >
+              <RotateCcw size={10} /> Reset
+            </button>
+          </div>
         </header>
 
         {/* TOP: Parameter Setup */}
@@ -134,27 +275,36 @@ const App = () => {
         </section>
 
         {/* MIDDLE: Massive Results */}
-        <section className="flex-1 flex flex-col justify-center bg-linear-to-br from-blue-700 via-blue-900 to-slate-950 rounded-[2rem] p-6 md:p-8 lg:p-10 text-white shadow-2xl relative overflow-hidden group border border-white/10 shrink-0 min-h-0">
-          <div className="absolute top-0 right-0 p-6 opacity-[0.03] scale-[2.5] pointer-events-none group-hover:rotate-6 transition-transform duration-1000">
-            <Calculator size={100} />
+        <section className="relative flex-1 flex flex-col justify-center bg-linear-to-br from-blue-700 via-blue-900 to-slate-950 rounded-[2rem] p-6 md:p-8 lg:p-10 text-white shadow-2xl overflow-hidden group border border-white/5 shrink-0 min-h-0">
+          
+          {/* Grid Texture */}
+          <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMiIgY3k9IjIiIHI9IjEiIGZpbGw9InJnYmEoMjU1LDI1NSwyNTUsMC4wNSkiLz48L3N2Zz4=')] opacity-10 mix-blend-overlay pointer-events-none" />
+
+          {/* Icon watermark */}
+          <div className="absolute -top-10 -right-10 p-6 opacity-[0.03] scale-[3] pointer-events-none transition-transform duration-[3000ms] ease-out">
+            <Calculator size={150} strokeWidth={1} />
           </div>
           
           <div className="relative z-10 w-full h-full flex flex-col justify-between overflow-hidden">
-            <div className="inline-flex self-start items-center gap-2 px-2.5 py-1 bg-white/10 rounded-full border border-white/10 text-[7px] font-black uppercase tracking-[0.2em] text-blue-100 mb-2">
+            <div className="inline-flex self-start items-center gap-2 px-3 py-1 bg-white/5 rounded-full border border-white/10 text-[7px] md:text-[8px] font-black uppercase tracking-[0.2em] text-blue-100 mb-2">
               <Activity size={8} className="text-blue-400" /> Life Cycle Total Cost Analysis
             </div>
             
-            <div className="flex-1 flex items-center justify-start py-2 overflow-hidden">
-              <div className="text-5xl md:text-7xl lg:text-[7.5vw] font-black tracking-tighter leading-none text-white transition-all duration-300 drop-shadow-[0_8px_30px_rgba(0,0,0,0.5)] flex items-baseline gap-2 whitespace-nowrap overflow-hidden">
-                {formatCurr(results.totalTCO)}
+            <div className="flex-1 flex flex-col justify-center py-4 overflow-visible relative z-10 w-full">
+              <div className="text-[10px] md:text-xs font-black text-slate-300 uppercase tracking-[0.3em] mb-1 flex items-center gap-2">
+                TOTAL COST OF OWNERSHIP
+              </div>
+              <div>
+                <div className="text-6xl md:text-8xl lg:text-[7.5vw] font-black tracking-tighter leading-[1.1] text-white flex items-baseline gap-2 whitespace-nowrap">
+                  {formatCurr(results.totalTCO)}
+                </div>
               </div>
             </div>
 
-            {/* ส่วนที่ปรับขนาดตัวอักษรใต้เลข Total */}
-            <div className="grid grid-cols-3 gap-3 pt-6 border-t border-white/10 mt-2 shrink-0">
-              <DisplayItem label="พลังงานสะสม" value={formatCurr(results.totalEnergyCost)} />
-              <DisplayItem label="ซ่อมบำรุงสะสม" value={formatCurr(results.totalMaintenanceCost)} />
-              <DisplayItem label="เฉลี่ยต้นทุน/ปี" value={formatCurr(results.averageYearlyCost)} highlight />
+            <div className="grid grid-cols-3 gap-2 md:gap-4 mt-4 shrink-0 relative z-10">
+              <WowDisplayItem icon={<Zap size={14} className="text-blue-400" />} label="พลังงานสะสม" value={formatCurr(results.totalEnergyCost)} />
+              <WowDisplayItem icon={<Factory size={14} className="text-indigo-400" />} label="ซ่อมบำรุงสะสม" value={formatCurr(results.totalMaintenanceCost)} />
+              <WowDisplayItem icon={<TrendingUp size={14} className="text-emerald-400" />} label="เฉลี่ยต้นทุน/ปี" value={formatCurr(results.averageYearlyCost)} highlight />
             </div>
           </div>
         </section>
@@ -189,6 +339,127 @@ const App = () => {
             </div>
           </div>
         </section>
+
+        {/* CHART: BREAKEVEN & TCO TREND */}
+        <section className="bg-slate-900/40 backdrop-blur-md rounded-2xl p-5 border border-white/5 shadow-lg shrink-0 mt-3 w-full animate-in fade-in duration-500">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4 border-b border-white/5 pb-3">
+            <div className="flex items-center gap-2">
+              <TrendingUp size={16} className="text-emerald-400" />
+              <h2 className="text-xs font-black uppercase tracking-[0.2em] text-slate-300">Lifecycle Cost & Breakeven</h2>
+            </div>
+            {breakevenMessages.length > 0 && (
+              <div className="flex flex-col items-start md:items-end gap-2">
+                {breakevenMessages.map((msg, i) => (
+                  <div key={i} className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-white/10 bg-white/5 text-[9px] md:text-[10px] font-medium text-slate-300 tracking-wide backdrop-blur-sm">
+                    <span className="relative flex h-1.5 w-1.5 shrink-0">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
+                    </span>
+                    {msg}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+          
+          <div className="h-[250px] w-full text-xs font-medium">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={chartData} margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" vertical={false} />
+                <XAxis dataKey="year" stroke="#ffffff40" tick={{ fill: '#ffffff60' }} tickLine={false} axisLine={false} />
+                <YAxis 
+                  stroke="#ffffff40" 
+                  tick={{ fill: '#ffffff60' }} 
+                  tickLine={false} 
+                  axisLine={false} 
+                  tickFormatter={(value) => `฿${(value / 1000).toFixed(0)}k`} 
+                />
+                <Tooltip 
+                  contentStyle={{ backgroundColor: '#0f172a', borderColor: '#ffffff10', borderRadius: '12px', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.5)' }} 
+                  itemStyle={{ color: '#fff' }} 
+                  formatter={(value) => formatCurr(value)} 
+                  labelStyle={{ color: '#94a3b8', fontWeight: 'bold', marginBottom: '4px' }}
+                />
+                <Legend iconType="circle" wrapperStyle={{ paddingTop: '10px' }} />
+                
+                <Line 
+                  type="monotone" 
+                  dataKey="Current Setup" 
+                  stroke="#3b82f6" 
+                  strokeWidth={3} 
+                  dot={{ r: 4, strokeWidth: 2 }} 
+                  activeDot={{ r: 6, stroke: '#fff', strokeWidth: 2 }} 
+                />
+                {savedScenarios.map((s, idx) => (
+                  <Line 
+                    key={s.id}
+                    type="monotone" 
+                    dataKey={s.name} 
+                    stroke={chartColors[idx % chartColors.length]} 
+                    strokeWidth={2} 
+                    strokeDasharray="4 4"
+                    dot={{ r: 3 }} 
+                  />
+                ))}
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </section>
+
+        {/* SAVED SIMULATIONS TABLE */}
+        {savedScenarios.length > 0 && (
+          <section className="bg-slate-900/40 backdrop-blur-md rounded-2xl p-4 md:p-5 border border-white/5 shadow-lg shrink-0 mt-2 mb-10 w-full animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="flex items-center justify-between mb-4 border-b border-white/5 pb-2">
+              <div className="flex items-center gap-2">
+                <Save size={14} className="text-blue-400" />
+                <h2 className="text-[10px] md:text-xs font-black uppercase tracking-[0.2em] text-slate-400">Saved Simulations</h2>
+              </div>
+              <div className="text-[9px] text-slate-500 font-bold uppercase tracking-widest bg-white/5 px-2 py-1 rounded-md">
+                {savedScenarios.length} {savedScenarios.length === 1 ? 'Simulation' : 'Simulations'}
+              </div>
+            </div>
+            <div className="overflow-x-auto w-full pb-2 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
+              <table className="w-full text-left text-xs whitespace-nowrap">
+                <thead>
+                  <tr className="border-b border-white/10 text-slate-500 font-bold uppercase tracking-[0.1em] text-[8px] md:text-[9px]">
+                    <th className="py-2 px-3">Name</th>
+                    <th className="py-2 px-3">CapEx</th>
+                    <th className="py-2 px-3">kW</th>
+                    <th className="py-2 px-3">Hr/Yr</th>
+                    <th className="py-2 px-3">฿/u</th>
+                    <th className="py-2 px-3">Maint/Yr</th>
+                    <th className="py-2 px-3">Life</th>
+                    <th className="py-2 px-3 text-blue-400 text-right">Total TCO</th>
+                    <th className="py-2 px-3 text-center">Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {savedScenarios.map((scenario) => (
+                    <tr key={scenario.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
+                      <td className="py-2.5 px-3 font-semibold text-white">{scenario.name}</td>
+                      <td className="py-2.5 px-3 text-slate-400">{formatCurr(scenario.inputs.initialCost)}</td>
+                      <td className="py-2.5 px-3 text-slate-400">{scenario.inputs.powerRating}</td>
+                      <td className="py-2.5 px-3 text-slate-400">{scenario.inputs.operatingHours}</td>
+                      <td className="py-2.5 px-3 text-slate-400">{scenario.inputs.electricityCost}</td>
+                      <td className="py-2.5 px-3 text-slate-400">{formatCurr(scenario.inputs.maintenanceCost)}</td>
+                      <td className="py-2.5 px-3 text-slate-400">{scenario.inputs.lifecycle} Yrs</td>
+                      <td className="py-2.5 px-3 font-black text-blue-400 text-right">{formatCurr(scenario.results.totalTCO)}</td>
+                      <td className="py-2.5 px-3 text-center">
+                        <button 
+                          onClick={() => handleRemoveScenario(scenario.id)}
+                          className="text-red-400/70 hover:text-red-400 p-1.5 bg-red-500/10 hover:bg-red-500/20 rounded-lg transition-all"
+                          title="Delete Simulation"
+                        >
+                          <Trash2 size={12} />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        )}
 
       </div>
     </div>
@@ -226,12 +497,17 @@ const InputBox = ({ label, name, value, onChange, unit }) => {
 };
 
 // คอมโพเนนต์ที่ปรับปรุงขนาดตัวอักษร
-const DisplayItem = ({ label, value, highlight }) => (
-  <div className="min-w-0">
-    {/* ปรับขนาด Label จาก 7px เป็น 10px */}
-    <p className="text-[10px] text-blue-100 font-black uppercase tracking-widest mb-1.5 opacity-60">{label}</p>
-    {/* ปรับขนาด Value จาก 14px เป็น text-lg (18px) หรือ xl (20px) */}
-    <p className={`text-base md:text-xl font-black truncate ${highlight ? 'text-emerald-400' : 'text-white'}`}>
+const WowDisplayItem = ({ icon, label, value, highlight }) => (
+  <div className={`flex flex-col p-3 md:p-4 rounded-2xl border ${highlight ? 'bg-emerald-500/10 border-emerald-500/30 shadow-[0_0_40px_rgba(16,185,129,0.2)]' : 'bg-transparent border-transparent'} min-w-0`}>
+    <div className="flex items-center gap-1.5 md:gap-2 mb-2">
+      <div className={`p-1 md:p-1.5 rounded-lg ${highlight ? 'bg-emerald-500/20' : 'bg-white/5'}`}>
+        {icon}
+      </div>
+      <p className={`text-[8px] md:text-[10px] font-black uppercase tracking-widest truncate ${highlight ? 'text-emerald-300' : 'text-slate-300'}`}>
+        {label}
+      </p>
+    </div>
+    <p className={`text-base md:text-xl lg:text-3xl font-black truncate tracking-tighter ${highlight ? 'text-emerald-400 drop-shadow-[0_0_15px_rgba(16,185,129,0.6)]' : 'text-white'}`}>
       {value}
     </p>
   </div>
