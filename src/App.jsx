@@ -339,7 +339,7 @@ const App = () => {
               
               <div className="relative group/total cursor-default">
                 <div className="absolute -inset-16 bg-blue-500/10 blur-[80px] rounded-full opacity-0 group-hover/total:opacity-100 transition-opacity duration-1000" />
-                <div className="text-5xl md:text-7xl lg:text-9xl font-black tracking-tighter leading-none text-white flex items-center gap-3 whitespace-nowrap drop-shadow-[0_25px_60px_rgba(30,58,138,0.4)] transition-all duration-700 group-hover/total:scale-[1.01] group-hover/total:text-blue-50">
+                <div className="text-5xl md:text-7xl lg:text-9xl tracking-tighter leading-none text-white flex items-center gap-3 whitespace-nowrap drop-shadow-[0_25px_60px_rgba(30,58,138,0.4)] transition-all duration-700 group-hover/total:scale-[1.01] group-hover/total:text-blue-50" style={{ fontFamily: '"Inter", sans-serif', fontWeight: 900 }}>
                   <span className="bg-linear-to-b from-white via-white to-blue-100 bg-clip-text text-transparent">
                     ฿{(results.totalTCO || 0).toLocaleString('th-TH')}
                   </span>

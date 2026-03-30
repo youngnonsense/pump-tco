@@ -91,7 +91,7 @@ export async function generatePdf({ inputs, results, chartData, savedScenarios, 
   const logoSize = 30;
   const logoX = pw - mx - logoSize;
   const logoY = 9;
-  
+
   // Add logo image if provided via Data URL (No circle, no clipping)
   if (logoDataUrl) {
     try {
@@ -151,6 +151,8 @@ export async function generatePdf({ inputs, results, chartData, savedScenarios, 
   });
 
   y += 6;
+
+
 
   // ========================================
   // SECTION: TCO RESULTS
@@ -571,6 +573,32 @@ export async function generatePdf({ inputs, results, chartData, savedScenarios, 
       y += 7;
     });
   }
+
+  // ========================================
+  // SECTION: TCO METHODOLOGY & FORMULA
+  // ========================================
+  needsPage(40);
+  y += 2;
+  drawSectionHeader(doc, mx, y, contentW, 'TCO CALCULATION METHODOLOGY');
+  y += 10;
+
+  drawRoundedRect(doc, mx, y, contentW, 26, 3, [248, 250, 252]);
+  doc.setFillColor(...C.emerald);
+  doc.roundedRect(mx, y, 3, 26, 1.5, 1.5, 'F');
+  
+  doc.setTextColor(...C.darkBlue);
+  doc.setFontSize(7.5);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Total Cost of Ownership (TCO)  =  CapEx + Lifecycle Energy Cost + Lifecycle Maintenance Cost', mx + 7, y + 6);
+  
+  doc.setFontSize(7.5);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(...C.gray);
+  doc.text('• CapEx (Capital Expenditure): Initial pump purchase and installation cost', mx + 7, y + 12);
+  doc.text('• Energy Cost = Motor Power (kW) x Operating Hours/Year x Electricity Rate (THB/Unit) x Lifecycle', mx + 7, y + 17);
+  doc.text('• Maintenance Cost = Annual Maintenance Cost (THB/Year) x Lifecycle', mx + 7, y + 22);
+
+  y += 34;
 
   // ========================================
   // FOOTER on all pages
